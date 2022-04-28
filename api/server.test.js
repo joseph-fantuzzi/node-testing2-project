@@ -66,8 +66,66 @@ describe("HTTP API functions are working properly", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(3);
   });
-  test.todo("[9] GET /api/students/:id");
-  test.todo("[10] POST /api/students");
-  test.todo("[11] DELETE /api/students/:id");
-  test.todo("[12] PUT /api/students/:id");
+
+  test("[9] GET /api/students/:id", async () => {
+    let res = await request(server).get("/api/students/1");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ student_id: 1, student_name: "Bobby", student_grade: 75 });
+
+    res = await request(server).get("/api/students/100");
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("message", "Student not found");
+  });
+
+  test("[10] POST /api/students", async () => {
+    let res = await request(server)
+      .post("/api/students")
+      .send({ student_name: "Greg", student_grade: 99 });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ student_id: 4, student_name: "Greg", student_grade: 99 });
+
+    let result = await Student.getAll();
+    expect(result).toHaveLength(4);
+
+    res = await request(server).post("/api/students").send({});
+    expect(res.status).toBe(500);
+
+    result = await Student.getAll();
+    expect(result).toHaveLength(4);
+  });
+
+  test("[11] DELETE /api/students/:id", async () => {
+    let res = await request(server).delete("/api/students/2");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ student_id: 2, student_name: "Marry" });
+
+    let result = await Student.getAll();
+    expect(result).toHaveLength(2);
+
+    res = await request(server).delete("/api/students/2");
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("message", "Student not found");
+
+    result = await Student.getAll();
+    expect(result).toHaveLength(2);
+  });
+
+  test("[12] PUT /api/students/:id", async () => {
+    let res = await request(server).put("/api/students/3").send({ student_name: "Sara" });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ student_id: 3, student_name: "Sara" });
+
+    let result = await Student.getById(3);
+    expect(result).toHaveProperty("student_name", "Sara");
+
+    result = await Student.getAll();
+    expect(result).toHaveLength(3);
+
+    res = await request(server).put("/api/students/300").send({ student_name: "Richard" });
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty("message", "Student not found");
+
+    res = await request(server).put("/api/students/1").send({ student_name: null });
+    expect(res.status).toBe(500);
+  });
 });
