@@ -74,7 +74,7 @@ describe("HTTP API functions are working properly", () => {
 
     res = await request(server).get("/api/students/100");
     expect(res.status).toBe(404);
-    expect(res.body).toHaveProperty("message", "Student not found");
+    expect(res.body).toHaveProperty("message", "Student with the id 100 not found");
   });
 
   test("[10] POST /api/students", async () => {
@@ -88,7 +88,7 @@ describe("HTTP API functions are working properly", () => {
     expect(result).toHaveLength(4);
 
     res = await request(server).post("/api/students").send({});
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
 
     result = await Student.getAll();
     expect(result).toHaveLength(4);
@@ -104,7 +104,7 @@ describe("HTTP API functions are working properly", () => {
 
     res = await request(server).delete("/api/students/2");
     expect(res.status).toBe(404);
-    expect(res.body).toHaveProperty("message", "Student not found");
+    expect(res.body).toHaveProperty("message", "Student with the id 2 not found");
 
     result = await Student.getAll();
     expect(result).toHaveLength(2);
@@ -123,9 +123,24 @@ describe("HTTP API functions are working properly", () => {
 
     res = await request(server).put("/api/students/300").send({ student_name: "Richard" });
     expect(res.status).toBe(404);
-    expect(res.body).toHaveProperty("message", "Student not found");
+    expect(res.body).toHaveProperty("message", "Student with the id 300 not found");
 
     res = await request(server).put("/api/students/1").send({ student_name: null });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty(
+      "message",
+      "student name or student grade needs to be supplied"
+    );
+
+    res = await request(server).put("/api/students/2").send({});
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty(
+      "message",
+      "student name or student grade needs to be supplied"
+    );
+
+    res = await request(server).put("/api/students/2").send({ student_grade: 100 });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ student_id: 2, student_name: "Marry", student_grade: 100 });
   });
 });
